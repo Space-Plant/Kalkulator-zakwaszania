@@ -4,78 +4,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalkulator zakwaszania pożywki</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; padding: 1rem; line-height: 1.5; }
-        fieldset { border: 1px solid #ccc; margin-bottom: 1.5rem; padding: 1rem; border-radius: 0.5rem; }
-        legend { font-weight: bold; }
-        label { display: block; margin-top: 1rem; }
-        input[type="number"], select { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 0.3rem; }
-        input[type="range"] { width: 100%; }
-        .slider-value { font-weight: bold; margin-left: 0.5rem; }
-        small { display: block; color: #666; margin-top: 0.2rem; }
-        button { margin-top: 1rem; padding: 0.75rem 1.5rem; font-size: 1rem; border: none; background: #28a745; color: #fff; border-radius: 0.3rem; cursor: pointer; }
-        button:hover { background: #218838; }
-        #result { margin-top: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 0.5rem; background: #f9f9f9; }
-        .error { color: red; }
+        /* Podstawowe ustawienia */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 700px;
+            margin: 2rem auto;
+            flex: 1;
+        }
+        /* Nagłówek */
+        header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        /* Karty formularza */
+        .card {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        fieldset {
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+        legend {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid #e1e5eb;
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+        }
+        input[type="number"], select, input[type="range"] {
+            width: 100%;
+            padding: 0.6rem;
+            margin-top: 0.3rem;
+            border: 1px solid #cbd2d9;
+            border-radius: 0.4rem;
+        }
+        .slider-value {
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+        small {
+            display: block;
+            color: #6b7380;
+            margin-top: 0.2rem;
+            font-size: 0.85rem;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 0.9rem;
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            background: #0066cc;
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s ease-in-out;
+        }
+        button:hover {
+            background: #005bb5;
+        }
+        /* Wynik */
+        #result {
+            margin-top: 2rem;
+            padding: 1.2rem;
+            background: #eaf3ff;
+            border-left: 4px solid #0066cc;
+            border-radius: 0.4rem;
+        }
+        .error {
+            color: #c00;
+            margin-top: 1rem;
+        }
+        /* Stopka */
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            background: #fff;
+            font-size: 0.9rem;
+            color: #6b7380;
+            border-top: 1px solid #e1e5eb;
+        }
     </style>
 </head>
 <body>
-    <h1>Kalkulator zakwaszania pożywki</h1>
-    <form id="calcForm">
-        <fieldset>
-            <legend>Krok 1: Podstawowe dane</legend>
-            <label>Objętość pożywki (w litrach):
-                <input type="number" id="volume" step="0.1" min="0" placeholder="np. 5" required>
-                <small>Wprowadź objętość pożywki, którą chcesz zakwasić.</small>
-            </label>
-        </fieldset><fieldset>
-        <legend>Krok 2: Ustawienie pH</legend>
-        <label>pH początkowe:
-            <input type="range" id="pH_init" min="0" max="14" step="0.1" value="7">
-            <span class="slider-value" id="pH_init_val">7.0</span>
-            <small>Przesuń suwak, aby ustawić aktualne pH wody.</small>
-        </label>
-        <label>Docelowe pH:
-            <input type="range" id="pH_target" min="0" max="14" step="0.1" value="6">
-            <span class="slider-value" id="pH_target_val">6.0</span>
-            <small>Przesuń suwak, aby wybrać pH, do którego chcesz obniżyć.</small>
-        </label>
-    </fieldset>
+    <div class="container">
+        <header>
+            <img src="https://zapodaj.net/images/e6dd3fae4484c.png" alt="Logo" class="logo">
+            <h1>Kalkulator zakwaszania pożywki</h1>
+        </header><div class="card">
+        <form id="calcForm">
+            <fieldset>
+                <legend>Krok 1: Podstawowe dane</legend>
+                <label>Objętość pożywki (L):
+                    <input type="number" id="volume" step="0.1" min="0" placeholder="np. 5" required>
+                    <small>Ile litrów pożywki chcesz zakwasić?</small>
+                </label>
+            </fieldset>
 
-    <fieldset>
-        <legend>Krok 3: Alkaliczność wody</legend>
-        <label>Alkaliczność (mg CaCO₃/L):
-            <input type="range" id="alkalinity" min="0" max="500" step="10" value="100">
-            <span class="slider-value" id="alk_val">100</span> mg/L
-            <small>Odporność wody na zmiany pH (niska: 0–100, średnia: 100–300, wysoka: 300–500).</small>
-        </label>
-    </fieldset>
+            <fieldset>
+                <legend>Krok 2: Ustawienie pH</legend>
+                <label>pH początkowe:
+                    <input type="range" id="pH_init" min="0" max="14" step="0.1" value="7">
+                    <span class="slider-value" id="pH_init_val">7.0</span>
+                    <small>Aktualne pH wody.</small>
+                </label>
+                <label>Docelowe pH:
+                    <input type="range" id="pH_target" min="0" max="14" step="0.1" value="6">
+                    <span class="slider-value" id="pH_target_val">6.0</span>
+                    <small>Do jakiego pH chcesz obniżyć?</small>
+                </label>
+            </fieldset>
 
-    <fieldset>
-        <legend>Krok 4: Wybór kwasu i stężenia</legend>
-        <label>Rodzaj kwasu:
-            <select id="acid_type">
-                <option value="HCl">Kwas solny (HCl)</option>
-                <option value="H2SO4">Kwas siarkowy (H₂SO₄)</option>
-                <option value="H3PO4">Kwas fosforowy (H₃PO₄)</option>
-                <option value="HNO3">Kwas azotowy (HNO₃)</option>
-            </select>
-            <small>Wybierz kwas, którego będziesz używać.</small>
-        </label>
-        <label>Stężenie roztworu kwasu (% m/m):
-            <input type="range" id="acid_percent" min="1" max="100" step="1" value="55">
-            <span class="slider-value" id="acid_percent_val">55%</span>
-            <small>Podaj stężenie procentowe kwasu, np. 55 dla 55%.</small>
-        </label>
-        <label>Gęstość roztworu (g/mL):
-            <input type="number" id="density" step="0.01" min="0" value="1.20">
-            <small>Jeśli nie znasz, pozostaw domyślną (1.20 g/mL).</small>
-        </label>
-    </fieldset>
+            <fieldset>
+                <legend>Krok 3: Alkaliczność</legend>
+                <label>Alkaliczność (mg CaCO₃/L):
+                    <input type="range" id="alkalinity" min="0" max="500" step="10" value="100">
+                    <span class="slider-value" id="alk_val">100 mg/L</span>
+                    <small>Odporność wody na zmiany pH.</small>
+                </label>
+            </fieldset>
 
-    <button type="button" id="calculate">Oblicz</button>
-</form>
+            <fieldset>
+                <legend>Krok 4: Wybór kwasu</legend>
+                <label>Rodzaj kwasu:
+                    <select id="acid_type">
+                        <option value="HCl">Kwas solny (HCl)</option>
+                        <option value="H2SO4">Kwas siarkowy (H₂SO₄)</option>
+                        <option value="H3PO4">Kwas fosforowy (H₃PO₄)</option>
+                        <option value="HNO3">Kwas azotowy (HNO₃)</option>
+                    </select>
+                </label>
+                <label>Stężenie kwasu (%):
+                    <input type="range" id="acid_percent" min="1" max="100" step="1" value="55">
+                    <span class="slider-value" id="acid_percent_val">55%</span>
+                    <small>Na etykiecie, np. 55%.</small>
+                </label>
+                <label>Gęstość roztworu (g/mL):
+                    <input type="number" id="density" step="0.01" min="0" value="1.20">
+                    <small>Domyślnie 1.20 g/mL, zmień jeśli wiesz.</small>
+                </label>
+            </fieldset>
 
-<div id="result"></div>
+            <button type="button" id="calculate">Oblicz</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+</div>
+
+<footer>
+    Autor: Space Plant Marceli Dubczyk
+</footer>
 
 <script>
     const acids = {
