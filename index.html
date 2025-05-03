@@ -1,0 +1,149 @@
+<!DOCTYPE html><html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator zakwaszania pożywki</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; padding: 1rem; line-height: 1.5; }
+        fieldset { border: 1px solid #ccc; margin-bottom: 1.5rem; padding: 1rem; border-radius: 0.5rem; }
+        legend { font-weight: bold; }
+        label { display: block; margin-top: 1rem; }
+        input[type="number"], select { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 0.3rem; }
+        input[type="range"] { width: 100%; }
+        .slider-value { font-weight: bold; margin-left: 0.5rem; }
+        small { display: block; color: #666; margin-top: 0.2rem; }
+        button { margin-top: 1rem; padding: 0.75rem 1.5rem; font-size: 1rem; border: none; background: #28a745; color: #fff; border-radius: 0.3rem; cursor: pointer; }
+        button:hover { background: #218838; }
+        #result { margin-top: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 0.5rem; background: #f9f9f9; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Kalkulator zakwaszania pożywki</h1>
+    <form id="calcForm">
+        <fieldset>
+            <legend>Krok 1: Podstawowe dane</legend>
+            <label>Objętość pożywki (w litrach):
+                <input type="number" id="volume" step="0.1" min="0" placeholder="np. 5" required>
+                <small>Wprowadź objętość pożywki, którą chcesz zakwasić.</small>
+            </label>
+        </fieldset><fieldset>
+        <legend>Krok 2: Ustawienie pH</legend>
+        <label>pH początkowe:
+            <input type="range" id="pH_init" min="0" max="14" step="0.1" value="7">
+            <span class="slider-value" id="pH_init_val">7.0</span>
+            <small>Przesuń suwak, aby ustawić aktualne pH wody.</small>
+        </label>
+        <label>Docelowe pH:
+            <input type="range" id="pH_target" min="0" max="14" step="0.1" value="6">
+            <span class="slider-value" id="pH_target_val">6.0</span>
+            <small>Przesuń suwak, aby wybrać pH, do którego chcesz obniżyć.</small>
+        </label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Krok 3: Alkaliczność wody</legend>
+        <label>Alkaliczność (mg CaCO₃/L):
+            <input type="range" id="alkalinity" min="0" max="500" step="10" value="100">
+            <span class="slider-value" id="alk_val">100</span> mg/L
+            <small>Odporność wody na zmiany pH (niska: 0–100, średnia: 100–300, wysoka: 300–500).</small>
+        </label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Krok 4: Wybór kwasu i stężenia</legend>
+        <label>Rodzaj kwasu:
+            <select id="acid_type">
+                <option value="HCl">Kwas solny (HCl)</option>
+                <option value="H2SO4">Kwas siarkowy (H₂SO₄)</option>
+                <option value="H3PO4">Kwas fosforowy (H₃PO₄)</option>
+                <option value="HNO3">Kwas azotowy (HNO₃)</option>
+            </select>
+            <small>Wybierz kwas, którego będziesz używać.</small>
+        </label>
+        <label>Stężenie roztworu kwasu (% m/m):
+            <input type="range" id="acid_percent" min="1" max="100" step="1" value="55">
+            <span class="slider-value" id="acid_percent_val">55%</span>
+            <small>Podaj stężenie procentowe kwasu, np. 55 dla 55%.</small>
+        </label>
+        <label>Gęstość roztworu (g/mL):
+            <input type="number" id="density" step="0.01" min="0" value="1.20">
+            <small>Jeśli nie znasz, pozostaw domyślną (1.20 g/mL).</small>
+        </label>
+    </fieldset>
+
+    <button type="button" id="calculate">Oblicz</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+    const acids = {
+        HCl:    { molarMass: 36.46, protons: 1, label: 'kwasu solnego (HCl)' },
+        H2SO4:  { molarMass: 98.08, protons: 2, label: 'kwasu siarkowego (H₂SO₄)' },
+        H3PO4:  { molarMass: 98.00, protons: 3, label: 'kwasu fosforowego (H₃PO₄)' },
+        HNO3:   { molarMass: 63.01, protons: 1, label: 'kwasu azotowego (HNO₃)' }
+    };
+
+    function updateSlider(id, displayId, suffix = '') {
+        const slider = document.getElementById(id);
+        const display = document.getElementById(displayId);
+        display.textContent = slider.value + suffix;
+        slider.addEventListener('input', () => {
+            display.textContent = slider.value + suffix;
+        });
+    }
+    updateSlider('pH_init', 'pH_init_val', '');
+    updateSlider('pH_target', 'pH_target_val', '');
+    updateSlider('alkalinity', 'alk_val', ' mg/L');
+    updateSlider('acid_percent', 'acid_percent_val', '%');
+
+    document.getElementById('calculate').addEventListener('click', () => {
+        const V = parseFloat(document.getElementById('volume').value);
+        const pH0 = parseFloat(document.getElementById('pH_init').value);
+        const pH1 = parseFloat(document.getElementById('pH_target').value);
+        const alk = parseFloat(document.getElementById('alkalinity').value);
+        const acidKey = document.getElementById('acid_type').value;
+        const percent = parseFloat(document.getElementById('acid_percent').value) / 100;
+        const density = parseFloat(document.getElementById('density').value);
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = '';
+
+        if (isNaN(V) || isNaN(pH0) || isNaN(pH1) || isNaN(alk) || isNaN(percent) || isNaN(density)) {
+            resultDiv.innerHTML = '<p class="error">Proszę wypełnić wszystkie pola poprawnymi wartościami.</p>';
+            return;
+        }
+        if (pH1 >= pH0) {
+            resultDiv.innerHTML = '<p class="error">pH docelowe musi być niższe niż początkowe.</p>';
+            return;
+        }
+        if (percent <= 0 || percent > 1) {
+            resultDiv.innerHTML = '<p class="error">Stężenie musi być pomiędzy 1% a 100%.</p>';
+            return;
+        }
+
+        const dPH = pH0 - pH1;
+        const eqPerL = (alk / 50) / 1000;
+        const requiredProtons = eqPerL * V * dPH;
+
+        const { molarMass, protons, label } = acids[acidKey];
+        const equivMass = molarMass / protons;
+        const massAcid = requiredProtons * equivMass;
+        const massSolution = massAcid / percent;
+        const volumeSolution_mL = massSolution / density;
+        let volumeText;
+        if (volumeSolution_mL >= 1000) {
+            volumeText = (volumeSolution_mL / 1000).toFixed(2) + ' L';
+        } else {
+            volumeText = volumeSolution_mL.toFixed(1) + ' mL';
+        }
+
+        resultDiv.innerHTML = `
+            <h2>Wskazówka</h2>
+            <p>Aby obniżyć pH z <strong>${pH0.toFixed(1)}</strong> do <strong>${pH1.toFixed(1)}</strong> w <strong>${V.toFixed(1)} L</strong> pożywki, wlej około <strong>${volumeText}</strong> roztworu ${label} o stężeniu <strong>${(percent*100).toFixed(0)}%</strong>.</p>
+        `;
+    });
+</script>
+
+</body>
+</html>
